@@ -60,15 +60,45 @@ export function wrapByWidth(
   return lines;
 }
 
+/**
+ * Resolve the `align` shorthand to (x, anchor). Explicit `x` / `anchor` win.
+ */
+export function resolveAlign(
+  o: TextOptions,
+  page: { width: number; padding: number },
+): { x: number; anchor: 'start' | 'middle' | 'end' | undefined } {
+  let x = o.x;
+  let anchor = o.anchor;
+  if (x === undefined || anchor === undefined) {
+    switch (o.align) {
+      case 'center':
+        x ??= page.width / 2;
+        anchor ??= 'middle';
+        break;
+      case 'right':
+        x ??= page.width - page.padding;
+        anchor ??= 'end';
+        break;
+      case 'left':
+        x ??= page.padding;
+        anchor ??= 'start';
+        break;
+    }
+  }
+  if (x === undefined) x = page.padding;
+  return { x, anchor };
+}
+
 export function buildTextFragment(
   s: string,
   y: number,
   defaultFamily: string,
-  o: TextOptions & { defaultX: number } = { defaultX: 0 },
+  o: TextOptions & { defaultX: number; defaultAnchor?: 'start' | 'middle' | 'end' } = { defaultX: 0 },
 ): string {
   const x = o.x ?? o.defaultX;
   const yy = o.y ?? y;
-  const anchor = o.anchor ? ` text-anchor="${o.anchor}"` : '';
+  const anchorVal = o.anchor ?? o.defaultAnchor;
+  const anchor = anchorVal ? ` text-anchor="${anchorVal}"` : '';
   const family = resolveFontFamily(o.family, defaultFamily);
   const size = o.size ?? 14;
   const weight = o.weight ?? 400;

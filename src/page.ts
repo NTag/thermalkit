@@ -11,6 +11,7 @@ import {
   approxWidth,
   wrapByWidth,
   resolveFontFamily,
+  resolveAlign,
   escapeXml,
   buildTextFragment,
   buildRuleFragment,
@@ -24,6 +25,8 @@ import type {
   RowOptions,
   ImageOptions,
   RenderOptions,
+  DotOptions,
+  KvOptions,
 } from './types.js';
 
 const DEFAULT_FONT = 'Helvetica, Arial, sans-serif';
@@ -84,12 +87,17 @@ export class Page {
   /**
    * Draw text at the current Y baseline (or at `opts.y` if given).
    * Does NOT advance the cursor — the caller controls vertical rhythm.
+   *
+   * `opts.align` is a shorthand for the (x, anchor) pair (see TextOptions).
+   * Explicit `x` / `anchor` win over `align`.
    */
   text(content: string, opts: TextOptions = {}): this {
+    const { x, anchor } = resolveAlign(opts, this);
     this.parts.push(
       buildTextFragment(content, this.y, this.defaultFontFamily, {
         ...opts,
-        defaultX: opts.x ?? this.padding,
+        defaultX: x,
+        defaultAnchor: anchor,
       }),
     );
     return this;
@@ -148,6 +156,22 @@ export class Page {
     return this;
   }
 
+  /**
+   * Draw a filled circle (dot) at (x, y) with the given radius.
+   * Common use: decorative ornaments under a heading.
+   *
+   *   page.dot(W/2 - 28, { r: 1.5 });
+   *   page.dot(W/2,      { r: 2.5 });
+   *   page.dot(W/2 + 28, { r: 1.5 });
+   */
+  dot(x: number, opts: DotOptions = {}): this {
+    const cy = opts.y ?? this.y;
+    const r = opts.r ?? 2;
+    const fill = opts.fill ?? '#000';
+    this.parts.push(`<circle cx="${x}" cy="${cy}" r="${r}" fill="${fill}"/>`);
+    return this;
+  }
+
   // ------------------------------------------------------------------
   //   Composition helpers
   // ------------------------------------------------------------------
@@ -164,6 +188,22 @@ export class Page {
     return this;
   }
 
+  /**
+   * Key/value row — label on the left, value on the right, same baseline.
+   * Cursor doesn't advance (matches the rest of the primitive API).
+   *
+   *   page.kv('Coucher', '21:14');
+   *   page.kv('Vent', '15 km/h SW', {
+   *     labelOpts: { weight: 500 },
+   *     valueOpts: { family: 'georgia', size: 18 },
+   *   });
+   */
+  kv(label: string, value: string, opts: KvOptions = {}): this {
+    this.text(label, { align: 'left', ...(opts.labelOpts ?? {}) });
+    this.text(value, { align: 'right', ...(opts.valueOpts ?? {}) });
+    return this;
+  }
+
   // ------------------------------------------------------------------
   //   Higher-level patterns
   // ------------------------------------------------------------------
@@ -175,8 +215,7 @@ export class Page {
   title(text: string, opts: { subtitle?: string; size?: number; family?: string; spacing?: number } = {}): this {
     const size = opts.size ?? 50;
     this.text(text, {
-      x: this.width / 2,
-      anchor: 'middle',
+      align: 'center',
       family: opts.family ?? 'georgia',
       size,
       weight: 700,
@@ -185,8 +224,7 @@ export class Page {
     if (opts.subtitle) {
       this.y += Math.round(size * 0.5);
       this.text(opts.subtitle, {
-        x: this.width / 2,
-        anchor: 'middle',
+        align: 'center',
         size: 14,
         style: 'italic',
         spacing: 3,

@@ -35,6 +35,8 @@ export type {
   RenderOptions,
   PosterOptions,
   PreparedImage,
+  DotOptions,
+  KvOptions,
   DitherAlgorithm,
   FontFamily,
   Align,

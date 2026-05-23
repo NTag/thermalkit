@@ -6,11 +6,19 @@ export type FontFamily = string;
 export type Align = 'left' | 'center' | 'right';
 
 export interface TextOptions {
-  /** X coordinate, or shorthand for alignment relative to the content area. */
+  /**
+   * Horizontal alignment shorthand. Sets a sensible (x, anchor) pair:
+   *   - `'left'`   → x = padding, anchor = 'start'  (default)
+   *   - `'center'` → x = width/2, anchor = 'middle'
+   *   - `'right'`  → x = width - padding, anchor = 'end'
+   * Overridden by an explicit `x` or `anchor`.
+   */
+  align?: Align;
+  /** X coordinate. Wins over `align`. */
   x?: number;
   /** Override Y (default: current cursor). */
   y?: number;
-  /** Text anchor — overrides the alignment derived from `x`. */
+  /** Text anchor. Wins over `align`. */
   anchor?: 'start' | 'middle' | 'end';
   /** Font family stack. Common shorthands: `'georgia'`, `'helvetica'`, `'mono'`. */
   family?: FontFamily;
@@ -24,6 +32,22 @@ export interface TextOptions {
   spacing?: number;
   /** Fill colour. Defaults to black; usually no reason to change. */
   fill?: string;
+}
+
+export interface DotOptions {
+  /** Y coordinate. Default: the page's current cursor. */
+  y?: number;
+  /** Radius in pixels. Default 2. */
+  r?: number;
+  /** Fill colour. Defaults to black. */
+  fill?: string;
+}
+
+export interface KvOptions {
+  /** Options applied to the label (left). */
+  labelOpts?: TextOptions;
+  /** Options applied to the value (right). */
+  valueOpts?: TextOptions;
 }
 
 export interface IconOptions {

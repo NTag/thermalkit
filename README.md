@@ -74,9 +74,23 @@ Construct a vertical layout buffer.
 | `page.text(content, opts?)` | Text at the current baseline. Does **not** auto-advance. |
 | `page.icon(name, size?, opts?)` | Phosphor icon (must be pre-loaded). |
 | `page.rule(opts?)` | Horizontal line at the current Y. |
+| `page.dot(x, opts?)` | Filled circle at (x, current Y). Handy for decorative ornaments. |
 | `page.image(pngBuffer, opts?)` | Embed a raster image (use `preparePoster` for halftone photos). |
 | `page.push(svgFragment)` | Append raw SVG (escape hatch for custom shapes). |
 | `page.row(fn, opts?)` | Run `fn` with the cursor preserved — multiple `text` / `icon` calls land on the same baseline. |
+| `page.kv(label, value, opts?)` | Label on the left, value on the right, same baseline. |
+
+#### Text alignment shorthand
+
+Instead of computing `x = page.width / 2, anchor = 'middle'` for every centered piece of text, use `align`:
+
+```js
+page.text('Centered',  { align: 'center', size: 14 });
+page.text('Right!',    { align: 'right',  weight: 700 });
+page.text('At PAD',    { align: 'left' });   // default
+```
+
+Explicit `x` / `anchor` win over `align`.
 
 ### Higher-level helpers
 
