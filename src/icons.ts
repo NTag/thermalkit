@@ -9,24 +9,21 @@
  *
  * The Page builder embeds this content via:
  *   <g transform="translate(x, y) scale(s)" fill="#000">{content}</g>
+ *
+ * Resolution note: phosphor's package.json restricts `exports` so that
+ * `require.resolve('@phosphor-icons/core/package.json')` fails on modern
+ * Node. The only thing the package exports besides `.` is the assets
+ * themselves, so we resolve each SVG by its public subpath
+ * (`./assets/<weight>/<name>.svg`) and let Node's resolver locate the
+ * package wherever it lives in the dependency tree.
  */
-import { readFileSync, existsSync } from 'node:fs';
-import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 const require_ = createRequire(import.meta.url);
 
 export type PhosphorWeight =
   | 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
-
-// Resolve the package once. Fall back gracefully if Phosphor isn't installed.
-let phosphorAssetsDir: string | null = null;
-try {
-  const pkgPath = require_.resolve('@phosphor-icons/core/package.json');
-  phosphorAssetsDir = path.join(path.dirname(pkgPath), 'assets');
-} catch {
-  phosphorAssetsDir = null;
-}
 
 const cache = new Map<string, string>();
 
@@ -45,11 +42,13 @@ export function loadIcon(name: string, weight: PhosphorWeight = 'regular'): stri
   const cached = cache.get(key);
   if (cached !== undefined) return cached;
   let content = '';
-  if (phosphorAssetsDir) {
-    const file = path.join(phosphorAssetsDir, weight, `${name}.svg`);
-    if (existsSync(file)) {
-      try { content = readInner(file); } catch { /* swallow */ }
-    }
+  try {
+    // Resolve via the public exports map. Throws if Phosphor isn't
+    // installed or the requested icon doesn't exist.
+    const file = require_.resolve(`@phosphor-icons/core/assets/${weight}/${name}.svg`);
+    content = readInner(file);
+  } catch {
+    // swallow — caller sees an empty string (page just skips the icon)
   }
   cache.set(key, content);
   return content;

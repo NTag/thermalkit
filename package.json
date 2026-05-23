@@ -1,6 +1,6 @@
 {
   "name": "thermalkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Compose nicely-typeset images for thermal receipt printers (Epson TM-T88VI and friends).",
   "type": "module",
   "main": "./dist/index.js",
