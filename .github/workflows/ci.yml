@@ -1,0 +1,40 @@
+# Runs on every PR and on pushes to main.
+# Typechecks the source and ensures the package builds cleanly.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify dist contents
+        run: |
+          test -f dist/index.js
+          test -f dist/index.d.ts
+          test -f dist/printer.js
+          test -f dist/printer.d.ts
+          test -f dist/icons.js
+          test -f dist/icons.d.ts
+          test -f dist/dither.js
+          test -f dist/dither.d.ts
+          echo "✓ all expected entry points emitted"

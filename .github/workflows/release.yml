@@ -1,0 +1,72 @@
+# Publishes thermalkit to npm via npm's Trusted Publishing (OIDC).
+#
+# Workflow:
+#   1. Bump locally:     `npm version patch`  (or minor / major)
+#       — this updates package.json AND creates a git tag like `v0.1.1`.
+#   2. Push with tags:   `git push --follow-tags`
+#   3. This workflow fires on the tag push and publishes to npm.
+#
+# Setup once (no NPM_TOKEN secret needed!):
+#   - Publish v0.1.0 manually one time:
+#       npm login
+#       npm publish --provenance --access public
+#   - On npmjs.com → package settings → "Trusted Publisher" → Add publisher
+#       Organization or user: NTag
+#       Repository:           thermalkit
+#       Workflow filename:    release.yml
+#       Environment:          (leave blank, or set if you use one below)
+#   - From then on, tag push → automatic publish.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  # Also allow manual triggering from the Actions tab if needed.
+  workflow_dispatch:
+
+# `id-token: write` is what enables OIDC-based Trusted Publishing.
+# `contents: read` is enough — we don't need to push commits back.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+
+      # Trusted Publishing requires npm >= 11.5.1. Node 24 ships npm 11,
+      # but we upgrade anyway to be safe across runners.
+      - name: Ensure recent npm
+        run: npm install -g npm@latest
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run build
+
+      - name: Sanity-check version matches tag
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Publishing v$PKG_VERSION"
+
+      # Publishes using OIDC — npm reads the GitHub Actions OIDC token
+      # automatically when `id-token: write` is granted. No NPM_TOKEN env var.
+      # `--provenance` attaches a sigstore-signed provenance attestation visible
+      # on the npm package page.
+      - name: Publish to npm
+        run: npm publish --provenance --access public

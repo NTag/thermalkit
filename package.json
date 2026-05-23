@@ -1,0 +1,74 @@
+{
+  "name": "thermalkit",
+  "version": "0.1.0",
+  "description": "Compose nicely-typeset images for thermal receipt printers (Epson TM-T88VI and friends).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./printer": {
+      "types": "./dist/printer.d.ts",
+      "import": "./dist/printer.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "import": "./dist/icons.js"
+    },
+    "./dither": {
+      "types": "./dist/dither.d.ts",
+      "import": "./dist/dither.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rolldown -c rolldown.config.ts && tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "dev": "rolldown -c rolldown.config.ts --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "thermal-printer",
+    "escpos",
+    "epson",
+    "receipt",
+    "image",
+    "halftone",
+    "dithering",
+    "atkinson",
+    "phosphor-icons"
+  ],
+  "author": "NTag",
+  "license": "MIT",
+  "homepage": "https://github.com/NTag/thermalkit#readme",
+  "bugs": {
+    "url": "https://github.com/NTag/thermalkit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NTag/thermalkit.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@phosphor-icons/core": "^2.1.1",
+    "node-thermal-printer": "^4.6.0",
+    "sharp": "^0.34.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "rolldown": "^1.0.0-beta.21",
+    "typescript": "^5.5.0"
+  }
+}
